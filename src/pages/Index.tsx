@@ -4,23 +4,18 @@ import { Navigation } from "@/components/ui/navigation";
 import { Dashboard } from "@/components/Dashboard";
 import { LogManagement } from "@/components/LogManagement";
 import { UserManagement } from "@/components/UserManagement";
-
-type User = {
-  name: string;
-  role: 'super' | 'admin' | 'user';
-};
+import { useAuth } from "@/hooks/useAuth";
 
 const Index = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [currentPath, setCurrentPath] = useState('/dashboard');
+  const { user, profile, loading, signOut } = useAuth();
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
+  const handleLoginSuccess = () => {
     setCurrentPath('/dashboard');
   };
 
-  const handleLogout = () => {
-    setCurrentUser(null);
+  const handleLogout = async () => {
+    await signOut();
     setCurrentPath('/dashboard');
   };
 
@@ -28,9 +23,28 @@ const Index = () => {
     setCurrentPath(path);
   };
 
-  if (!currentUser) {
-    return <LoginForm onLogin={handleLogin} />;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto shadow-glow animate-pulse">
+            <div className="w-8 h-8 bg-white/30 rounded-full"></div>
+          </div>
+          <p className="text-muted-foreground">加载中...</p>
+        </div>
+      </div>
+    );
   }
+
+  if (!user || !profile) {
+    return <LoginForm onLoginSuccess={handleLoginSuccess} />;
+  }
+
+  // Create a compatible user object for existing components
+  const currentUser = {
+    name: profile.username,
+    role: profile.role,
+  };
 
   const renderContent = () => {
     switch (currentPath) {
